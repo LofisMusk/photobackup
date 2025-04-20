@@ -1,6 +1,0 @@
-<key>NSPhotoLibraryUsageDescription</key>
-<string>Kopia zapasowa zdjęć na Twój serwer</string>
-<key>BGTaskSchedulerPermittedIdentifiers</key>
-<array>
-    <string>pl.twoja_firma.photoBackup</string>
-</array>

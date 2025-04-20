@@ -1,0 +1,22 @@
+name: PhotoBackup
+options:
+  bundleIdPrefix: com.example
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    DEVELOPMENT_TEAM: ""
+targets:
+  PhotoBackup:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [PhotoBackup]
+    info:
+      path: PhotoBackup/Info.plist
+      properties:
+        UISupportedInterfaceOrientations: ["UIInterfaceOrientationPortrait"]
+    entitlements:
+      com.apple.security.application-groups: []

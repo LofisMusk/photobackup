@@ -1,9 +1,10 @@
+
 import SwiftUI
 import Photos
 
 struct ContentView: View {
     @StateObject private var backup = PhotoBackupManager()
-    
+
     var body: some View {
         VStack(spacing: 32) {
             if backup.authorized {
@@ -14,7 +15,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
             } else {
-                Button("Poproś o dostęp do Zdjęć") {
+                Button("Poproś o dostęp do Zdjęć") {
                     PHPhotoLibrary.requestAuthorization { _ in
                         Task { await backup.checkAuthorization() }
                     }
