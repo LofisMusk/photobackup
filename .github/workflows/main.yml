@@ -1,0 +1,75 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request: {}
+
+jobs:
+  build:
+    runs-on: macos-14          # GitHub Hosted runner (Xcode 16.2+¹)
+
+    timeout-minutes: 30
+    steps:
+    # 1️⃣ checkout
+    - uses: actions/checkout@v4
+
+    # 2️⃣ cache SwiftPM (lub CocoaPods)
+    - name: Cache SPM
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Library/Developer/Xcode/DerivedData
+          .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+
+    # 3️⃣ instalacja zależności (przykład: SwiftPM)
+    - name: Resolve packages
+      run: xcodebuild -resolvePackageDependencies
+
+    # 4️⃣ import certyfikatu i profilu
+    - name: Import code‑signing assets
+      uses: apple-actions/import-codesign-certs@v2
+      with:
+        p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
+        p12-password:    ${{ secrets.CERT_PASSWORD }}
+        mobileprovision-base64: ${{ secrets.PROVISIONING_PROFILE }}
+
+    # 5️⃣ build + archive
+    - name: Build & Archive
+      run: |
+        xcodebuild \
+          -workspace PhotoBackup.xcworkspace \
+          -scheme PhotoBackup \
+          -configuration Release \
+          -archivePath $PWD/PhotoBackup.xcarchive \
+          clean archive \
+          CODE_SIGN_STYLE=Automatic \
+          DEVELOPMENT_TEAM=<TEAM_ID>
+
+    # 6️⃣ export .ipa
+    - name: Export IPA
+      run: |
+        xcodebuild -exportArchive \
+          -archivePath PhotoBackup.xcarchive \
+          -exportPath $PWD/build \
+          -exportOptionsPlist ExportOptions.plist
+        ls -R build
+
+    # 7️⃣ artefakt do pobrania
+    - uses: actions/upload-artifact@v4
+      with:
+        name: PhotoBackup.ipa
+        path: build/PhotoBackup.ipa
+
+    # 8️⃣ (opcjonalnie) upload do TestFlight
+    - name: Upload TestFlight
+      if: github.ref == 'refs/heads/main'
+      env:
+        API_KEY_B64: ${{ secrets.APPSTORE_API_KEY }}
+      run: |
+        echo "$API_KEY_B64" | base64 -d > /tmp/api_key.json
+        brew install fastlane  # runner nie ma preinstalowanego fastlane
+        fastlane run upload_to_testflight \
+          api_key_path:/tmp/api_key.json \
+          ipa:build/PhotoBackup.ipa
